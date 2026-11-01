@@ -3,12 +3,3 @@
 Thumbs.db
 *.swp
 *~
-
-# WeChat upload keys & local secrets (NEVER commit)
-**/*.key
-**/private.*.key
-project/private.*.key
-project/secrets.local.json
-*.local.json
-!**/secrets.local.example.json
-!**/secrets.local.json.example
