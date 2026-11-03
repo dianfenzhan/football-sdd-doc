@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>界龙散客 · 本地预览</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #d7ddd9; font-family: -apple-system, "PingFang SC", sans-serif; }
+  .wrap { min-height: 100vh; display: flex; justify-content: center; padding: 24px 12px 48px; }
+  .phone { width: 390px; background: #f4f6f5; border-radius: 28px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.18); min-height: 780px; }
+  .hero { background: linear-gradient(165deg, #123f30, #1f6a4f); color: #fff; padding: 28px 20px 20px; }
+  .hero h1 { margin: 0; font-size: 22px; }
+  .meta { margin-top: 6px; opacity: .9; font-size: 13px; }
+  .body { padding: 12px; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .tip, .muted { color: #66706c; font-size: 13px; }
+  button { border: 0; border-radius: 12px; padding: 12px 14px; font-size: 16px; width: 100%; margin-top: 10px; }
+  .btn { background: #0f3d2e; color: #fff; }
+  .soft { background: #e8efe9; color: #0f3d2e; }
+  .pair { display: flex; gap: 8px; }
+  .name, .member { flex: 1; min-height: 36px; padding: 8px 4px; border-bottom: 1px solid #eef2f0; }
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .team { width: calc(50% - 5px); background: #fff; border-radius: 16px; padding: 12px; min-height: 120px; }
+  .team.over { outline: 2px solid #1f6a4f; }
+  .head { display: flex; align-items: center; gap: 6px; font-weight: 650; margin-bottom: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #ddd; }
+  .member { display: block; cursor: grab; }
+  .sheet { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; justify-content: center; }
+  .sheet-body { width: min(390px, 100%); background: #fff; border-radius: 20px 20px 0 0; padding: 20px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+  .chip { width: auto; padding: 8px 14px; border-radius: 999px; background: #f4f6f5; }
+  .chip.on { background: #0f3d2e; color: #fff; }
+  .mine { font-size: 18px; font-weight: 650; color: #0f3d2e; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="phone">
+    <div class="hero">
+      <h1>界龙散客</h1>
+      <div class="meta">周三 20:00</div>
+      <div class="meta">界龙足球基地</div>
+      <div class="meta" id="count"></div>
+    </div>
+    <div class="body" id="app"></div>
+  </div>
+</div>
+<script>
+const NAMES = ['张三','李四','王五','赵六','周七','吴八','郑九','冯十','陈一','褚二','卫三','蒋四','沈五','韩六','杨七','朱八','秦九','尤十','许一','何二','吕三','施四','张五','孔六','曹七','严八','华九','金十','魏一','陶二','姜三','戚四']
+const COLORS = ['#e24b4b','#f5f5f5','#f2c14e','#3d8bfd','#3aaa5a','#222']
+const LABELS = ['红队','白队','黄队','绿队','蓝队','黑队']
+let signed = false
+let teams = []
+let pool = NAMES.map((name, i) => ({ id: i, name, team: null }))
+let selected = null
+let sheet = false
+let teamCount = 4
+let size = 8
+
+function render() {
+  const signedCount = pool.length
+  document.getElementById('count').textContent = '已报名 ' + (signed ? signedCount : signedCount - 1) + ' / 40'
+  const app = document.getElementById('app')
+  const divided = teams.length > 0
+  let html = ''
+  if (!signed) {
+    html += `<div class="card"><div class="tip">点一次就行，不用选队。人齐了老板再分。</div><button class="btn" id="signup">报名</button></div>`
+  } else {
+    html += `<div class="card"><div class="mine">已报名，待分队</div></div>`
+  }
+  if (!divided) {
+    html += `<div class="card"><button class="soft" id="divide">分成若干队</button><div class="muted">建议人到齐再分。默认每队 8 人，可改成 7 或 9。</div></div>`
+    html += `<div class="card"><div class="head">已报名 ${pool.length} 人</div>`
+    for (let i = 0; i < pool.length; i += 2) {
+      html += `<div class="pair"><div class="name">${pool[i].name}</div><div class="name">${pool[i+1] ? pool[i+1].name : ''}</div></div>`
+    }
+    html += `</div>`
+  } else {
+    html += `<div class="card"><button class="soft" id="divide">重新分队</button></div><div class="grid">`
+    teams.forEach((team, index) => {
+      const members = pool.filter(p => p.team === index)
+      html += `<div class="team" data-team="${index}"><div class="head"><span class="dot" style="background:${team.color}"></span>${team.name} ${members.length}</div>`
+      members.forEach(p => { html += `<div class="member" draggable="true" data-id="${p.id}">${p.name}</div>` })
+      html += `</div>`
+    })
+    html += `</div>`
+    if (teams.length >= 4) {
+      html += `<div class="card"><div class="head">对战场次</div><div class="muted">${teams[0].name} vs ${teams[1].name} · 1号场</div><div class="muted">${teams[2].name} vs ${teams[3].name} · 2号场</div></div>`
+    } else {
+      html += `<div class="card muted">${teams.length} 队不生成场次。进球记在整场活动上。</div>`
+    }
+  }
+  app.innerHTML = html
+  const signup = document.getElementById('signup')
+  if (signup) signup.onclick = () => { signed = true; render() }
+  const divide = document.getElementById('divide')
+  if (divide) divide.onclick = () => { sheet = true; renderSheet() }
+  document.querySelectorAll('.member').forEach(el => {
+    el.ondragstart = (e) => { e.dataTransfer.setData('id', el.dataset.id) }
+  })
+  document.querySelectorAll('.team').forEach(el => {
+    el.ondragover = (e) => { e.preventDefault(); el.classList.add('over') }
+    el.ondragleave = () => el.classList.remove('over')
+    el.ondrop = (e) => {
+      e.preventDefault()
+      const id = Number(e.dataTransfer.getData('id'))
+      const person = pool.find(p => p.id === id)
+      if (person) person.team = Number(el.dataset.team)
+      render()
+    }
+  })
+  if (sheet) renderSheet()
+}
+function renderSheet() {
+  let node = document.getElementById('sheet')
+  if (!node) {
+    node = document.createElement('div')
+    node.id = 'sheet'
+    node.className = 'sheet'
+    document.body.appendChild(node)
+  }
+  node.innerHTML = `<div class="sheet-body">
+    <div class="head">分成几队</div>
+    <div class="chips" id="counts">${[2,3,4,5,6].map(n => `<button class="chip ${n===teamCount?'on':''}" data-n="${n}">${n} 队</button>`).join('')}</div>
+    <div class="head">每队大约</div>
+    <div class="chips" id="sizes">${[7,8,9].map(n => `<button class="chip ${n===size?'on':''}" data-s="${n}">${n} 人</button>`).join('')}</div>
+    <button class="btn" id="ok">开始分队</button>
+  </div>`
+  node.querySelectorAll('[data-n]').forEach(el => el.onclick = () => { teamCount = Number(el.dataset.n); renderSheet() })
+  node.querySelectorAll('[data-s]').forEach(el => el.onclick = () => { size = Number(el.dataset.s); renderSheet() })
+  document.getElementById('ok').onclick = () => {
+    teams = Array.from({ length: teamCount }, (_, i) => ({ name: LABELS[i], color: COLORS[i] }))
+    pool.forEach((p, i) => { p.team = i < teamCount * size ? i % teamCount : null })
+    sheet = false
+    node.remove()
+    render()
+  }
+}
+render()
+</script>
+</body>
+</html>

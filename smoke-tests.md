@@ -250,17 +250,19 @@
 
 ---
 
-## 10. 魔镜
+## 10. 界龙散客（two）
 
-在取消本场报名之后、未报名保存战术板之前跑。
+在周三联主路径删除活动之后跑。账号须已是管理员；授权人会同时成为两队主管理员。
 
 | 场景 | 检查名 | 通过标准 |
 | --- | --- | --- |
-| FAQ 命中取消鸽子 | `mirrorAsk faq pigeon` | `ok`；`hitId === signup-cancel-pigeon`；`usedModel` 假；答文含鸽子或 4 小时；含 `remaining` |
-| 实时下一场 | `mirrorAsk live next` | `ok`；答非空；`usedModel` 假 |
-| 未命中走模型路径 | `mirrorAsk model path` | `ok`；答非空；若为「暂未开通」/「开小差」则 `remaining` 与问前相同（失败不计次） |
-| 反馈有用 | `mirrorFeedback` | 有 `logId` 时 `ok` |
-| 本周额度 | `mirrorQuota` | `ok`；`weekLimit` 按登录身份（授权人 100 / 管理员 50 / 普通 15）；`remaining` 为 0～`weekLimit` |
+| 两队底座 | `orgMe` / `orgMe two clubs` | `ok`；有两队；界龙无常驻分组；报名模式含 `pool` |
+| 建场 | `createActivity jielong` | `ok`；标题「冒烟界龙」；报名上限 40 |
+| 一点报名 | `signup jielong` / `signup jielong placed` | `ok`；`signed` 真；`teamId === team_pending` |
+| 注人 | `smokeSeedSignups jielong` | 再注入 30 个假人正选（合计 31） |
+| 分 4 队每队约 8 | `assignTeams` / `assignTeams four by eight` | `assignedCount === 31`；`fixtureCount === 6` |
+| 场次已分 | `activityDetail jielong` / `activityDetail divided` | `divided` 真；`rounds.length === 6` |
+| 删场 | `deleteActivity jielong` | 主管理员 `ok` |
 
 ---
 
@@ -270,5 +272,6 @@
 - 授权或取消管理员（`setAdmin` 不在脚本里）。
 - 定时 `sendKickoffReminders` 与真实推达（只断言模板 ID 已配置）。
 - 头像上传/清除/同步，以及「我的」页选择器。
-- 页面点击、分享卡片、注册弹层、后补两次授权弹窗。
+- 页面点击、分享卡片、注册弹层、后补订阅授权弹窗（一点申请候补+开赛两个模板）。
+- 顶栏一支队不可切、未入队首页空态、深链自动切队、「我的」入队说明文案（属 UI，脚本不点）。
 - 新建页报名方式点选、联合拖拽。
