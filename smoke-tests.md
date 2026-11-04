@@ -24,7 +24,7 @@
 
 活动生命周期：`createActivity`（含空标题/地点失败）、`signup` / `signup duplicate`、`listActivities`、`activity listed`、`activityDetail after delete`
 
-界龙：`orgMe two clubs`、`createActivity jielong`、`signup jielong placed`、`smokeSeedSignups jielong`、`auto teams by eight`、`assignTeams by roster six`、`smokeSeedSignups jielong after manual`、`activityDetail divided`、`addFixture manual`、`deleteFixture manual`、`deleteRoundDirectory renumber`、`addSessionTeam full`、`jielong tactics board kept after rename`、`removeSessionTeam occupied`、`removeSessionTeam empty`、`startJielongCup too few active teams`、`startJielongCup four active teams`、`saveFixtureScore cup round1`、`startJielongCup locked by score`、`clearFixtureScores`、`resetFixtures four teams`、`startJielongCup and clearFixtureScores`
+界龙：`orgMe two clubs`、`createActivity jielong`、`createActivity jielong pending shell`、`signup jielong pending`、`smokeSeedSignups jielong`、`pending pool before assign`、`assignTeams by roster six`、`smokeSeedSignups jielong after manual`、`activityDetail divided`、`addFixture manual`、`deleteFixture manual`、`deleteRoundDirectory renumber`、`addSessionTeam full`、`jielong tactics board kept after rename`、`removeSessionTeam occupied`、`removeSessionTeam empty`、`startJielongCup too few active teams`、`startJielongCup four active teams`、`saveFixtureScore cup round1`、`startJielongCup locked by score`、`clearFixtureScores`、`resetFixtures four teams`、`startJielongCup and clearFixtureScores`
 
 已移除：`mirrorAsk` / `mirrorFeedback` / `mirrorQuota` 相关检查。
 
