@@ -6,15 +6,15 @@
 
 | 页面 | 主要调用 |
 | --- | --- |
-| home | `me`、`homeSummary`（下一场固定 `clubId=all`：仅当前用户已报名正选的最近一场 + 天气；无则各角色统一「暂无报名的比赛」）；首页无新建入口（新建只在活动页 FAB）；界龙展示报名进度条；已报名横幅界龙分队后显示本场队名（未分队仅「已报名」，待分队显示「待分队」）；天气先 Open-Meteo（首请求+1 次重试），再云函数 `activityWeather`，仍失败显示「点此重试」 |
+| home | `me`、`homeSummary`（下一场固定 `clubId=all`：仅当前用户已报名正选的最近一场 + 天气；无则各角色统一「暂无报名的比赛」）；首页无新建入口（新建只在活动页 FAB）；无球队时提示可通过球队或活动分享加入；界龙展示报名进度条；已报名横幅界龙分队后显示本场队名（未分队仅「已报名」，待分队显示「待分队」）；天气先 Open-Meteo（首请求+1 次重试），再云函数 `activityWeather`，仍失败显示「点此重试」 |
 | activities | `me`、`listActivities`、`deleteActivity`；顶栏标题「活动」字号固定；多队时绿顶栏下小字当前队 + ▾，贴顶下拉切球队；`startTime + 12h` 已过的场次列表置灰仍可点进详情 |
 | activity | `activityDetail`、`signup`、`cancelSignup`、`setWaitUntil`、`saveProfile`、`updateQuota`、`saveRound`、`deleteRound`、`setContribution`、`deleteContribution`、`setAbsent`、`saveTacticsBoard`；未加入周三联或无分组时点报名弹注册/入队窗（带出已有头像、昵称、擅长位置）；报名须知后申请订阅消息，失败/取消/超时仍继续报名；分队场管理员可见「点人数上限改名额」提示 |
 | activity-edit | `me` / `orgMe`、`createActivity` |
 | stats | `me`、`homeSummary`、`clubStats`；顶栏「数据」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队；含进球、助攻、乌龙、出勤；鸽子榜仅管理员可见，并提示「仅管理员可见，此信息不会暴露给队员」 |
 | players | `me`、`listPlayers`、`adminUpdatePlayer`、`setClubAdmin`；顶栏「球员」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队；「全部」只读并提示先切球队；列表不展示进球等数据，管理员点队员进弹窗才看/改本队运动数据与资料/设管理员；普通成员不返回也不展示 `clubStats` |
 | me | `me`、`orgMe`、`saveProfile`、`setMyGroup`、`updateClubGroup`；含个人运动数据栏（总活动数、总进球数、总助攻数、总乌龙球数、总鸽子数） |
-| club | `joinClub`、`updateClubGroup`、`reorderClubGroups`；顶栏「球队」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队 |
-| session | `activityDetail`、`saveProfile`、`signup`、`cancelSignup`、`updateActivityBasics`、`assignTeams`（一键智能分队：围绕 8 人分 2～5 队、同标签优先同队、≤45 人全进队、>45 人晚报名留未分队池、某队单一标签过半自动带组名与球衣色）、`adminMoveSignup` / `adminSwapSignup`、`addSessionTeam` / `removeSessionTeam`、`setSessionColor`、`saveTacticsBoard`、`startJielongCup`、`clearFixtureScores`、`saveFixtureScore`、`addFixture`、`deleteRound`、`deleteRoundDirectory`、`resetFixtures`、`updateFixture`、`setContribution`、`setAbsent`、`deleteContribution`；仅未加入界龙时点报名弹注册/入队窗（带出已有头像、昵称、擅长位置）；已入队（含名册为空按「未分组」）不再反复确认资料；入队后走报名须知（鸽子规则，界龙开赛前 1.5h）并申请开赛提醒订阅；报名不设人数上限、无后补；新建场默认带 A/B 空队且 `manualRoster=true`，报名一律进「未分队池」（`team_pending`）；分队区提供「⚡ 一键分队」与手动拖拽/点选微调；「开启界龙杯」放在分队网格下方，不满足 4/5 非空队且 ≥24 人时置灰仍可点出原因；队名默认 A～F 队，改名可选名册组自动带出球衣色（可再改）；4 队小组赛积分榜 + 决赛/季军赛记满后显示领奖台，5 队小组赛全部记满后按积分显示冠亚季；开启界龙杯后立即开放「记录球员数据」且场次记分后支持一键跳到本场球员数据录入 |
+| club | `orgMe`、`me`、`saveProfile`、`joinClub`、`setMyGroup`、`switchClub`、`updateClubGroup`、`reorderClubGroups`；顶栏「球队」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队；本队 admin/owner 可「邀请入队」分享 `?invite=1&clubId=`；落地时已入队且库内有有效分组则提示「您已经是{队名}队员了」并切当前队，否则弹全量确认窗（昵称/头像/位置/分组必选，有资料预填；界龙默认选 `jl_other` 未分组可改）经 `saveProfile` 入队 |
+| session | `activityDetail`、`saveProfile`、`signup`、`cancelSignup`、`updateActivityBasics`、`assignTeams`（一键智能分队：围绕 8 人分 2～5 队、同标签优先同队、≤45 人全进队、>45 人晚报名留未分队池、某队单一标签过半自动带组名与球衣色）、`adminMoveSignup` / `adminSwapSignup`、`addSessionTeam` / `removeSessionTeam`、`setSessionColor`、`saveTacticsBoard`、`startJielongCup`、`clearFixtureScores`、`saveFixtureScore`、`addFixture`、`deleteRound`、`deleteRoundDirectory`、`resetFixtures`、`updateFixture`、`setContribution`、`setAbsent`、`deleteContribution`；仅未加入界龙时点报名弹注册/入队窗（带出已有头像、昵称、擅长位置）；已入队（含名册为空按「未分组」）不再反复确认资料；入队后走报名须知（鸽子规则，界龙开赛前 1.5h）并申请开赛提醒订阅；报名不设人数上限、无后补，未手动介入分队前按报名顺序每满 8 人自动新开一队（A队、B队…最多 6 队）；分队区提供「⚡ 一键分队」（满 16 人可用，不足时置灰并提示可手动拖）与手动拖拽/点选微调；管理员一键分队、调人、加减队或改队名后置 `manualRoster=true`，此后新报名进「未分队池」（`team_pending`）并提示点选或长按拖进各队；「开启界龙杯」放在分队网格下方，池内有人时优先提示分人；已满足开杯且池空时一键分队降为次要并提示可直接开杯，否则不满足 4/5 非空队且 ≥24 人时置灰仍可点出原因（24～27 人分出 3 队时提示可加一队并调人凑 4 队）；队名默认 A～F 队，改名可选名册组自动带出球衣色（可再改）；4 队小组赛积分榜 + 决赛/季军赛记满后显示领奖台，5 队小组赛全部记满后按积分显示冠亚季；开启界龙杯后立即开放「记录球员数据」且场次记分后支持一键跳到本场球员数据录入 |
 
 ## 云函数 action
 
@@ -38,7 +38,7 @@
 | createActivity | 标题/地点必填；分队或联合 |
 | deleteActivity | 仅授权人（主管理员）可删；界龙亦要求主管理员；普通管理员无删除入口 |
 | updateQuota | 分队改名额；满员后补可顶上；联合场拒绝 |
-| signup / cancelSignup | 报名与取消；临期取消记鸽子（周三联开赛前 4h、界龙 1.5h；开赛前重报清除）；界龙报名不设上限、无后补，须已 joinClub；管理员介入分队/调人后新报名进 `team_pending` 未分队池 |
+| signup / cancelSignup | 报名与取消；临期取消记鸽子（周三联开赛前 4h、界龙 1.5h；开赛前重报清除）；界龙报名不设上限、无后补，须已 joinClub；管理员未介入前按每满 8 人自动扩组入队（A～F 队），管理员介入分队/调人/改队名后新报名进 `team_pending` 未分队池 |
 | moveSignup / swapSignups | 仅联合场 |
 | setWaitUntil | 后补等待时长 |
 | smokeSeedSignups | 冒烟灌数，非业务入口 |
@@ -63,7 +63,7 @@
 | orgMe / joinClub / setMyGroup / switchClub | 俱乐部身份 |
 | updateClubGroup / reorderClubGroups / setClubAdmin | 组与管理员 |
 | updateActivityBasics | 界龙管理员开赛前改标题/地点/时间 |
-| assignTeams | 界龙一键智能分队：围绕 8 人分 2～5 队（≤45 人全部入队、>45 人晚报名留未分队池），同名册组优先抱团进同一队，单一组占比 ≥50% 自动带出组名与球衣色；不自动生成对阵；有比分后锁队 |
+| assignTeams | 界龙一键智能分队：正选满 16 人可用（与界龙杯 ≥24 人门槛独立）；围绕 8 人分 2～5 队（≤45 人全部入队、>45 人晚报名留未分队池），同名册组优先抱团进同一队，单一组占比 ≥50% 自动带出组名与球衣色；不自动生成对阵；正式队已有人时前端二次确认会打乱现有名单；有比分后锁队 |
 | adminMoveSignup / adminSwapSignup | 界龙管理员调人（仅管理员可点选或拖拽队员换组/对调、从「未分队」池拉人进组，操作后置 `manualRoster=true`）；对调互换队伍与顺序；换组写入组内末位 `sessionOrder` |
 | addSessionTeam / removeSessionTeam | 分队后加队（最多 6）/ 删空队（至少留 2），操作后置 `manualRoster=true`；删队时若该队仍在对阵中则拒绝；对阵展示找不到队名时兜底为默认色名并标注「已不在名单」，不再直接露出 `sess_*` id |
 | startJielongCup / clearFixtureScores | 按键开启/重开界龙杯（校验非空正式队为 4 或 5 支且队内正选 ≥24 人，置 `cupStarted=true`、`cupTeamIds`、`manualRoster=true` 并生成轮次对阵；已开赛后若不满足 4/5 队或 24 人可传 `exitToManual=true` 清除轮次与积分榜退回手动模式；有比分时拒绝开赛/重开）；`clearFixtureScores` 一键清空本场全部已记比分（保留轮次与个人数据） |
