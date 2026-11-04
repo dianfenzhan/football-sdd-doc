@@ -1,90 +1,81 @@
-# 功能
+# 功能清单（以代码为准）
 
-以代码为准。页面入口看 `codeBase/miniprogram/app.json` 和各页 `call(...)`。云函数 action 看 `codeBase/cloudfunctions/api/index.js` 的 `exports.main`。对齐用 skill `doc-anchored`。
+个人主体小程序，不含 AI / 魔镜。小程序端不直连库，一律走云函数 `api`。
 
-两支球队：`team_jiong` jiong 路青少年，`team_pudong` 浦东老聚三。
+## 页面（`miniprogram/app.json`）
 
-底部导航 5 项：首页、活动、数据、球员、我的。
-
-## 页面
-
-| 页面 | 路径 | 调用 | 行为 |
-| --- | --- | --- | --- |
-| 首页 | `pages/home/home` | `homeSummary`、`me`（天气走客户端 Open-Meteo，不经云函数） | 顶栏标题「首页」。顶部品牌头（⚽️ 徽标 + 队名 + 副标语）。还没开始的最近一场以深绿渐变大卡展示：右上角金色倒计时徽章（还有 N 天/N 小时/已开赛）、📅 日期时间、📍 地点、报名进度条（自家主队在上；联合场含「联队」共三组）。已报名该场时按钮区显示浅绿状态条「✓ 已报名 · 本场报名队名」（以 `signedTeamId` 为准，改报另一队时显示另一队），未报名显示深绿大按钮「⚽️ 去报名」，均直达/可点进该活动页。有下一场时，球局信息、报名入口与球局日天气合在同一卡片：上深绿场次、中报名状态、下浅绿天气区（Open-Meteo 12:00–24:00 曲线，地点定死界龙；嵌入时只标「球局当天天气」，日期地点以上方场次为准），默认选中开赛整点，可左右拖动；客户端直连失败时改走云函数 `activityWeather`，仍失败则不展示。体验版若直连被拦截，需在小程序后台把 `https://api.open-meteo.com` 配进 request 合法域名。没有未开始活动时显示空态卡（🥅 + 「最近没有球局」），管理员额外显示同款 hero「＋ 新建活动」按钮，普通球员无按钮 |
-| 活动 | `pages/activities/activities` | `me`、`listActivities`、`deleteActivity` | 按开始时间倒序，每页 10 条，滑到底再取下一页。每条活动的两队人数文案按自家主队在前。管理员右下角常驻深绿圆形悬浮「＋」新建活动。只有授权人能左滑一条活动后点「删除」，确认后删除整场并重新加载列表。管理员看不到删除 |
-| 新建 | `pages/activity-edit/activity-edit` | `me`、`createActivity` | 页内先选报名方式：左侧「分队报名」（标注原有报名方式）、右侧「联合报名」（标注新的报名方式），默认分队；联合说明为共享报名资源池、分三队报名，创建后不能改。标题默认「养生球」。地点默认「界龙足球基地（界绿路 88 号）」。时间默认最近未到的周三 20:00。分队时可滚动选两队人数 1～30（默认 11）；联合时提示每组固定 8 人且不选手动人数。非管理员不可新建。创建人不自动报名。创建成功后直接进入活动页，不弹分享；用户自己报名、自己转发 |
-| 活动页 | `pages/activity/activity` | `activityDetail`、`signup`、`cancelSignup`、`moveSignup`、`swapSignups`、`setWaitUntil`、`saveProfile`、`updateQuota`、`saveRound`、`deleteRound`、`deleteContribution`、`setContribution`、`setAbsent`、`saveTacticsBoard` | 开赛时间创建后不能改。未开始时顶部是报名操作区（滚动时常驻屏幕上方）。联合场名单三列横排（主队→对方→联队），姓名过长截断。分队和联合的每列正选都是：昵称 `jzy`、`肉粽` 若在该列则固定最上方，其余人含管理员按本场报名时间从早到晚往下排；后补仍按排队顺序。长按拖动时，管理员松手在另一名正选身上是对调（不看满不满）：确认框「把甲换到某队，乙换到某队？」，取消则不动；确认后先在名单上入位，失败提示「对调失败」并还原。松手在队名、人数或行间空白是放入该队（球员只能拖自己；拖到人身上也按放入）：已满提示「该组已满」，不升后补；先入位，失败提示「换位失败」并还原。拖动时高亮落点，提示「松手对调 · 甲 ↔ 乙」或「松手放入 · 队名」。轻点名字仍是选目标队单向换。名单下的说明按身份分两行：管理员是「对调：拖到队员身上」「换队：拖到空白处」；球员是「换队：长按自己拖到有空的队」「对调：请找管理员」。被分到联队或对方队时顶部说明按实际名额写：仅当本队（及联队）确实已满才写「已满」，否则只提示「你在联队/某队」并带换组说明；顶栏不再单独提供换队按钮。分队后补在各队名单正下方（每队最多 3，序号、头像、姓名，无人显示暂无）。联合后补在三队下方整行展示（共享最多 6，两列按顺序排，无人显示暂无）。自己排在后补里时该行高亮。本队正选已满时弹出选择，左边是「后补本队」，右边是「改报对面」。点「改报对面」时对方正选已满，提示「对面已满，不能报名」，不进入报名。正选先看报名须知（含开赛前 4 小时取消规则），点「同意并报名」后在同一次点击里调起一次性订阅授权「活动开始通知」。后补先看三行说明：有人退出，自动补上并发消息；开赛前 4 小时前取消，不记鸽子；下一步会申请两条订阅消息（候补补位通知、开赛前提醒）。点「同意并后补」同一次 `requestSubscribeMessage` 传入「报名候补通知」和「活动开始通知」两个模板 ID，微信弹一个授权窗可同时处理两项。接着选补位截止时间：打开时按当前时间去掉已过档位；首次后补默认开赛前 4 小时，修改时回显已保存档位；20:00 开球、18:31 只剩开赛前 1 小时和开赛最后一刻。取消确认：正选 4 小时外「现在取消无责。」，4 小时内「现在取消会记一次鸽子。开赛前重新报名，这次鸽子会去掉。」后补条按钮是「修改补位截止时间」「取消后补」，取消后补内容「现在取消后补，无责。」在「报名名单」下方、「记录数据」上方常驻内嵌战术板：顶部切组（分队两队；联合另含联队），默认本场所在队（未报名则主队）；当前组正选出勤前 8 上场，其余在轮换；不足 8 人空坑「待报名」；报名/取消等触发刷新后立刻重算各组（未保存按当前正选，已保存走校准并提示离队）；仅本场正选可拖站位/上下场并保存，且可改任意组；后补/未报名可看可导出。「保存阵容」及导出/分享海报（含轮换名单）。已开始后全员可见本场数据和每轮比分，管理员多出「记录数据」 |
-| 数据 | `pages/stats/stats` | `homeSummary`、`me` | 顶部时间跨度切换：近 3 个月、近半年、近 1 年，默认近 3 个月。第二行是整段选择：全部、自家主队、另一队，默认「全部」。榜单类型做成卡片顶上的四个页签：进球 / 助攻 / 出勤 / 鸽子，一次只显示一张榜前 10。出勤 = 时间窗内已开始活动的报名次数，扣掉该场被标鸽子的；未开赛报名不计。行含名次、头像（无头像首字色块）、姓名、球队、数值。单场数据从活动 tab 点进活动页查看 |
-| 我的 | `pages/me/me` | `me`、`saveProfile`、`listMembers`、`setAdmin` | chooseAvatar 按钮选微信头像、相册或拍照。相册和拍照会重新进入页面，未保存的新头像不会被这次刷新清掉。nickname 输入框快捷填微信昵称、球队选择、擅长位置四选一（前锋 / 中场 / 后卫 / 门将）。保存时头像有变更先传云存储再存 fileID，成功提示「已同步」，并同步姓名和头像到该用户所有报名和数据记录。授权人可开关其他人的管理员 |
-| 球员 | `pages/players/players` | `me`、`listPlayers`、`adminUpdatePlayer` | 胶囊切换两支球队，默认选自己球队且排在左边，没填资料默认 jiong 路。每行展示头像（无头像首字色块）、姓名与擅长位置简称；昵称 `jzy`、`肉粽` 在各自球队固定为队长排第一并标「队长」，其余管理员紧随其后，再按注册时间倒序。管理员点击任意队员弹出修改框，可改该队员头像、昵称和擅长位置；普通队员只读。空态提示「该球队还没有队员」 |
+| 页面 | 主要调用 |
+| --- | --- |
+| home | `me`、`homeSummary`（下一场固定 `clubId=all`：仅当前用户已报名正选的最近一场 + 天气；无则各角色统一「暂无报名的比赛」）；首页无新建入口（新建只在活动页 FAB）；界龙展示报名进度条；已报名横幅界龙分队后显示本场队名（未分队仅「已报名」，待分队显示「待分队」）；天气先 Open-Meteo（首请求+1 次重试），再云函数 `activityWeather`，仍失败显示「点此重试」 |
+| activities | `me`、`listActivities`、`deleteActivity`；顶栏标题「活动」字号固定；多队时绿顶栏下小字当前队 + ▾，贴顶下拉切球队；`startTime + 12h` 已过的场次列表置灰仍可点进详情 |
+| activity | `activityDetail`、`signup`、`cancelSignup`、`setWaitUntil`、`saveProfile`、`updateQuota`、`saveRound`、`deleteRound`、`setContribution`、`deleteContribution`、`setAbsent`、`saveTacticsBoard`；未加入周三联或无分组时点报名弹注册/入队窗（带出已有头像、昵称、擅长位置）；报名须知后申请订阅消息，失败/取消/超时仍继续报名；分队场管理员可见「点人数上限改名额」提示 |
+| activity-edit | `me` / `orgMe`、`createActivity` |
+| stats | `me`、`homeSummary`、`clubStats`；顶栏「数据」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队；含进球、助攻、乌龙、出勤；鸽子榜仅管理员可见，并提示「仅管理员可见，此信息不会暴露给队员」 |
+| players | `me`、`listPlayers`、`adminUpdatePlayer`、`setClubAdmin`；顶栏「球员」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队；「全部」只读并提示先切球队；列表不展示进球等数据，管理员点队员进弹窗才看/改本队运动数据与资料/设管理员；普通成员不返回也不展示 `clubStats` |
+| me | `me`、`orgMe`、`saveProfile`、`setMyGroup`、`updateClubGroup`；含个人运动数据栏（总活动数、总进球数、总助攻数、总乌龙球数、总鸽子数） |
+| club | `joinClub`、`updateClubGroup`、`reorderClubGroups`；顶栏「球队」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队 |
+| session | `activityDetail`、`saveProfile`、`signup`、`cancelSignup`、`updateActivityBasics`、`adminMoveSignup` / `adminSwapSignup`、`addSessionTeam` / `removeSessionTeam`、`setSessionColor`、`saveTacticsBoard`、`startJielongCup`、`clearFixtureScores`、`saveFixtureScore`、`addFixture`、`deleteRound`、`deleteRoundDirectory`、`resetFixtures`、`updateFixture`、`setContribution`、`setAbsent`、`deleteContribution`；仅未加入界龙时点报名弹注册/入队窗（带出已有头像、昵称、擅长位置）；已入队（含名册为空按「未分组」）不再反复确认资料；入队后走报名须知（鸽子规则，界龙开赛前 1.5h）并申请开赛提醒订阅；报名不设人数上限、无后补；新建场默认带 A/B 空队且 `manualRoster=true`，报名一律进「未分队池」（`team_pending`）；仅管理员可拉人进组或调队；界面无「按组分队」；「开启界龙杯」放在分队网格下方，不满足 4/5 非空队且 ≥24 人时置灰仍可点出原因；队名默认 A～F 队，改名可选名册组自动带出球衣色（可再改）；4 队小组赛积分榜 + 决赛/季军赛记满后显示领奖台，5 队小组赛全部记满后按积分显示冠亚季；其余战术板/记分/重开界龙杯行为同前 |
 
 ## 云函数 action
 
-| action | 谁可以 | 行为 |
-| --- | --- | --- |
-| `me` | 已登录 | 当前用户和两支球队。若还没有授权人，最早的管理员成为授权人 |
-| `saveProfile` | 已登录 | 保存姓名、球队、擅长位置 `preferredPosition`（`fw` / `mf` / `df` / `gk`，缺省随机赋予）和头像（`avatarUrl` 可空：传空串清除，不传不动旧值），并改写该用户已有报名和进球助攻缺勤记录上的姓名、头像；不改写这些记录上的球队。第一个建档的人是管理员且是授权人。姓名为空、球队非法或位置非法则失败 |
-| `adminUpdatePlayer` | 管理员 | 修改指定队员 `userId` 的昵称、头像和擅长位置，并同步其 `signups`、`contributions` 上的姓名与头像 |
-| `saveTacticsBoard` | 本场正选（已建档） | 保存活动场次战术板（`scope: 'activity'`，按 `activityId + teamId` 唯一覆盖写入，标题取组名）；本场正选可保存任意组；场上最多 8 人。非正选、缺少活动、组非法或未建档则失败 |
-| `listMembers` | 授权人 | 成员列表 |
-| `listPlayers` | 已登录 | 全部队员列表（带擅长位置 `preferredPosition`），按注册时间倒序，上限 200 |
-| `setAdmin` | 授权人 | 开关他人管理员。不能改授权人自己 |
-| `listActivities` | 已登录 | 活动按开始时间倒序，每页 10 条，传 `page` 翻页，返回 `hasMore`。带每队名额和已报名人数 |
-| `deleteActivity` | 授权人 | 删除活动，并级联删除该场的名额、报名、轮次、进球助攻缺勤与活动战术板。缺少活动或记录不存在则失败。管理员和非管理员都失败 |
-| `activityDetail` | 已登录 | 一场的名额、报名（每条带 `userId`、擅长位置、近 3 月出勤数、是否管理员、冗余姓名和头像）、本场各组已保存战术板 `activityBoards`、轮次、进球助攻缺勤、当前用户，以及 `subscribeTemplates`（`remind` 为「活动开始通知」，`promote` 为「报名候补通知」；部署时从 `secrets.local.json` 写入函数目录本地文件）。管理员额外得到已建档队员 `members`。缺少活动则失败 |
-| `createActivity` | 管理员 | 标题、地点、开始时间、报名模式。分队两队 1 到 30，缺省 11。联合三组固定 8，含联队，不能改人数。标题、地点或时间为空则失败。模式和开赛时间创建后不能改，授权人也不能改 |
-| `updateQuota` | 管理员 | 只改分队人数。联合场拒绝。活动已开始、人数不在 1 到 30、或低于该队已报名人数则失败。改大后本队后补按顺序补上 |
-| `signup` | 已填资料 | 分队本队有空报本队。本队正选满时传 `choice`：`waitlist` 排本队后补，`other` 改报对方正选。对方正选已满则失败「对面已满，不能报名」，不能后补对方。联合按本队、联队、对方队依次占坑，都满则进共享后补。可传 `waitHours`（0 到 24 的整数，0 为开赛最后一刻）和订阅授权标记。不改主队。活动已开始、档位已过或重复报名则失败 |
-| `cancelSignup` | 已登录 | 取消自己这场的正选或后补。正选取消后立刻升对应后补。距开赛不足 4 小时取消正选会记系统鸽子，不少于 4 小时或退出后补不记。活动已开始或未报名则失败 |
-| `moveSignup` | 已报名 | 联合场把正选换到未满组。球员只能动自己，管理员可动别人。名单先本地入位再请求；失败提示「换位失败」并还原。已满则「该组已满」，不升后补 |
-| `swapSignups` | 管理员 | 联合场把两名不同组的正选对调，满不满都行。传 `openidA`、`openidB`。同一人、同一组、含后补、分队场、已开赛或非管理员则失败。人数不变，不升后补，不改主队。成功后活动页刷新，已保存阵容仍按离队校准 |
-| `setWaitUntil` | 后补中 | 改后补截止档位，开赛前 24 小时到开赛最后一刻，每小时一档。已过去的档位或不是整数小时则拒绝 |
-| `sendKickoffReminders` | 定时触发 | 开赛前 2 小时给仍是正选且已授权、尚未发送的人发「活动开始通知」（thing7/4/11、date3、thing6）。后补升正选发「报名候补通知」（phrase10/thing2/time4/thing3/thing6）。模板 ID 来自 `SUBSCRIBE_REMIND_TEMPLATE` / `SUBSCRIBE_PROMOTE_TEMPLATE` |
-| `saveRound` | 管理员 | 新增或修改一轮比分，jiong 对浦东，0 到 99 |
-| `deleteRound` | 管理员 | 按 `roundId` 删除一轮。缺少轮次或记录不存在则失败。非管理员失败 |
-| `deleteContribution` | 管理员 | 按 `contributionId` 删除一名队员这场的进球、助攻和出勤。缺少记录或记录不存在则失败。非管理员失败 |
-| `setContribution` | 管理员 | 只给当前正选记进球和助攻，0 到 99。不是正选时提示「只能给本场正选记进球、助攻和鸽子」。系统鸽子不能改。已经是鸽子时，进球或助攻不为 0 则失败 |
-| `setAbsent` | 管理员 | 只给当前正选标鸽子或改回。系统自动鸽子不能改。不是正选时提示「只能给本场正选记进球、助攻和鸽子」。鸽子时进球或助攻不为 0 则失败 |
-| `stats` | 已登录 | 按 `month`、`quarter` 或 `year` 汇总进球、助攻、缺勤，行内带头像。可传 `teamId`。页面不直接调用，冒烟脚本用它做统计断言 |
-| `homeSummary` | 已登录 | 开始时间晚于现在的最近一场（带 `signedUp`、`signedTeamId`：当前用户是否已报名及本场报名球队），以及 `span`（`3m` `6m` `1y`，页面只提供这三项；`2y` `3y` 仍可用，非法值按 `3m`）内进球、助攻、出勤、鸽子各前 10（带头像）。出勤按已开始活动的报名计、扣鸽子。鸽子榜只计开赛时间已到的场次，并按球员当前主队归队，未开赛不计入。可传合法 `teamId` 只汇总该队并回显 `teamId`；非法或不传则两队合计、`teamId` 为空串。首页只取最近一场，数据页用榜单 |
-| `activityWeather` | 已登录 | 云函数版天气。首页先客户端直连 Open-Meteo，失败再调本接口。缺少/非法 `startTime` 仍失败。冒烟用首页天气卡断言 |
-| `smokeSeedSignups` | 管理员 | 仅标题以「冒烟」开头的活动可注入假人报名（`teamId`、`status` 为正选或后补、`count` 1～30）。供冒烟测后补与顶上；正式业务不调用 |
+### 身份与成员
 
-## 界龙散客（`two`，未部署）
+| action | 要点 |
+| --- | --- |
+| me | 当前用户资料、权限与个人运动数据汇总（`myStats`：总活动数、总进球数、总助攻数、总乌龙球数、总鸽子数） |
+| saveProfile | 个人资料（姓名最多 16 字、头像、擅长位置选填）与球队分组解耦；支持传 `clubId + groupId`（或 `teamId`）按球队入队并落组，不污染未加入球队；非法值失败 |
+| listMembers | 仅可授权管理员 |
+| listPlayers | 球员列表；调用者为某队管理员/主管理员时，对可管球队附带 `clubStats`（该队总活动数、总进球数、总助攻数、总乌龙球数、总鸽子数）；普通成员无此字段 |
+| setAdmin | 设管理员 |
+| adminUpdatePlayer | 管理员改球员资料；改名同样最多 16 字 |
 
-同一云环境里，不传 `clubId` 的 `listActivities` / `homeSummary` 会跳过 `clubId === club_jielong` 的活动，避免旧客户端把散客局当成下一场。传 `clubId` 才看对应球队。周三联创建、报名、联合、后补入口不走这些新分支。
+### 活动与报名
 
-| 页面 | 路径 | 调用 | 行为 |
-| --- | --- | --- | --- |
-| 顶栏切队 | `components/club-nav` | 本地 `viewClubFilter` | 活动 / 球员 / 数据 / 球队设置挂载。0 队或 1 队：只显示队名（或「未加入球队」），无 ▾、不可点。≥2 队：可选「全部 / 各已加入队」，记住上次筛选 |
-| 首页 | `pages/home/home` | `orgMe`（可选）、`me`、`homeSummary` | 未入队：空态引导等活动分享，不展示下一场。已入队：下一场大卡始终取全部已加入球队里最近一场（`clubId=all`），不随顶栏切队变；筛单队时若另一队另有未开赛且不是这张大卡，则一行提示可点进并切队。界龙进 `session`，周三联进 `activity`；打开时写入该队筛选。分享路径与进场页一致 |
-| 活动列表 | `pages/activities/activities` | `listActivities`、`me`、`orgMe`（可选） | 跟顶栏筛选；`clubId=all` 两队都看。条目带球队标签 |
-| 数据 | `pages/stats/stats` | `homeSummary`、`clubStats`、`orgMe`（可选） | 跟顶栏筛选。界龙进球/助攻读 `goal_events` |
-| 新建 | `pages/activity-edit/activity-edit` | `orgMe`、`createActivity` | 界龙只填标题、时间、地点、报名上限（默认 40）。不预先选队数。创建后进场次页 |
-| 场次 | `pages/session/session` | `activityDetail`、`orgMe`、`signup`、`cancelSignup`、`assignTeams`、`adminMoveSignup`、`setSessionColor`、`saveFixtureScore`、`updateFixture`、`addGoalEvent` | 界龙统一入口（含分享）。打开后切筛选到界龙。未报名时展示名册六组芯片（必选，默认「散客⚽️」可改），点报名进待分队并写入名册组。未分队时名单两列。老板点「分成若干队」选 2～6 队、每队 7/8/9（默认 8）。分完后队卡两列网格；点人再点队名换队；「改名」调 `setSessionColor`。分成 4/5/6 队自动生成对战场次；有场次时展示积分榜。管理员可记进球、乌龙 |
-| 我的 | `pages/me/me` | `me`、`orgMe`、`setMyGroup`、`updateClubGroup`、`saveProfile` | 无顶栏切队。资料：头像/昵称/擅长位置。下方「我的球队」只列已加入；说明「请让管理员把活动分享给你」，无选队目录。周三联可改默认组；本队管理员可改组名 |
-| 球员 | `pages/players/players` | `listPlayers`、`orgMe`、`setClubAdmin`、`adminUpdatePlayer` | 跟顶栏球队筛选。「全部」只读。开关上方标「管理员」，拨动先弹确认再授权；只能授本队 |
-| 我的球队页 | `pages/club/club` | `orgMe`、`setMyGroup`、`updateClubGroup` 等 | 不提供点加入；未加入只提示走分享报名。已加入可维护周三分组 |
+| action | 要点 |
+| --- | --- |
+| listActivities | 分页活动列表，可按俱乐部过滤 |
+| activityDetail | 详情、报名、比分、战术板等 |
+| createActivity | 标题/地点必填；分队或联合 |
+| deleteActivity | 仅授权人（主管理员）可删；界龙亦要求主管理员；普通管理员无删除入口 |
+| updateQuota | 分队改名额；满员后补可顶上；联合场拒绝 |
+| signup / cancelSignup | 报名与取消；临期取消记鸽子（周三联开赛前 4h、界龙 1.5h；开赛前重报清除）；界龙报名不设上限、无后补，须已 joinClub；管理员介入分队/调人后新报名进 `team_pending` 未分队池 |
+| moveSignup / swapSignups | 仅联合场 |
+| setWaitUntil | 后补等待时长 |
+| smokeSeedSignups | 冒烟灌数，非业务入口 |
+| smokeSetCallerRole | 仅测试云：切换当前用户为 owner/admin/member/fresh，供三角色走查；正式环境拒绝 |
 
-| action | 谁可以 | 行为 |
-| --- | --- | --- |
-| `orgMe` | 已登录 | 两支球队、角色、`currentClubId`。界龙含常驻名册六组（塔子/界龙/伤心/汤姆/爱情/散客） |
-| `joinClub` | 已建档 | 周三联必选 `groupId`；界龙不选组即可加入 |
-| `setMyGroup` | 已加入周三联 | 改常驻分组。界龙拒绝 |
-| `switchClub` | 已加入 | 只改 `currentClubId` |
-| `updateClubGroup` / `reorderClubGroups` | 周三联主管理员 | 改名、改色、调顺序。界龙拒绝 |
-| `setClubAdmin` | 该队主管理员或普通管理员 | 只能授本队 `admin/member`；不能改授权人/主管理。授 `admin` 时可顺带拉入未入队对象。周三联会同步旧字段 `isAdmin` |
-| `updateClubGroup` 改名 | 该队管理员 | 可改组名；改色仍限主管理员 |
-| `createActivity` 且 `clubId=club_jielong` | 界龙管理员 | 报名上限默认 40；`divided` 假；名单进待分队池 |
-| `updateActivityBasics` | 该队管理员 | 开赛前改标题、地点、时间；界龙还可改报名上限 |
-| `signup` 界龙场 | 已建档 | 未满直接正选挂 `team_pending`；到上限进共享后补。未加入界龙时自动加入；名册 `groupId` 必选，缺省或非法则 `jl_other`（散客⚽️）。返回「已报名」 |
-| `assignTeams` | 界龙管理员 | 分成 2～6 队，每队目标 7/8/9（默认 8），尽量匀开；多出的留未分队。4/5/6 队自动写场次；2/3 队清场次。有比分或进球则失败 |
-| `adminMoveSignup` / `adminSwapSignup` | 界龙管理员 | 有比分或进球后锁定。球员不能自己换队 |
-| `cancelSignup` 界龙场 | 已报名 | 读该队取消截止小时。正选退出后共享后补顶上 |
-| `saveFixtureScore` | 界龙管理员 | 记 0～99。4 队小组赛满且无同分时补冠亚季军 |
-| `updateFixture` | 界龙管理员 | 换场地或改未赛对阵 |
-| `setSessionColor` | 界龙管理员 | 改本场队名/颜色 |
-| `addGoalEvent` / `deleteGoalEvent` | 该队管理员 | 进球者必填，助攻可空。有场次时挂场次，否则挂活动 |
-| `clubStats` | 已登录 | 按 `goal_events` 汇总 |
-| `deleteContribution` | 管理员 | 可删系统鸽子 |
-| `saveRound` 界龙场 | 管理员 | 失败，提示用场次图 |
+### 战绩与战术
+
+| action | 要点 |
+| --- | --- |
+| saveRound / deleteRound | 轮次比分新增/修改与删除（`deleteRound` 兼容周三联与界龙场次删除） |
+| setContribution / deleteContribution | 整场进球、助攻、乌龙球记录与删除（两队通用；系统鸽子与管理员鸽子均可删除） |
+| setAbsent | 鸽子；系统鸽子不可直接改状态（可删除）；有进球/助攻/乌龙时不可标鸽子 |
+| saveTacticsBoard | 通用活动分组战术板（周三联与界龙共用），按 `activityId + teamId` 持久化（改组名不影响已存板），仅允许排入本组正选，默认 8 人 3-2-2、场上最多 9 槽；未报名不可存 |
+| stats | 周期战绩表 |
+| homeSummary | 下一场 = 调用者已报名正选且未开赛的最近一场（首页 `clubId=all`；可按俱乐部筛）；无报名则 `nextActivity` 为空；附带近期榜（进球/助攻/乌龙/出勤/鸽子），榜单可按俱乐部/队过滤；鸽子榜仅对应队管理员（或主管理员）返回，非管理员 `absencesTop` 为空，并带 `absencesAdminOnly: true` |
+| activityWeather | 按开赛时间取天气 |
+
+### 多俱乐部 / 场次组织
+
+| action | 要点 |
+| --- | --- |
+| orgMe / joinClub / setMyGroup / switchClub | 俱乐部身份 |
+| updateClubGroup / reorderClubGroups / setClubAdmin | 组与管理员 |
+| updateActivityBasics | 界龙管理员开赛前改标题/地点/时间 |
+| assignTeams | 界龙按组一键分 6 队并开启手动分队池模式（`manualRoster=true`），不自动生成对阵；有比分后锁队 |
+| adminMoveSignup / adminSwapSignup | 界龙管理员调人（仅管理员可点选或拖拽队员换组/对调、从「未分队」池拉人进组，操作后置 `manualRoster=true`）；对调互换队伍与顺序；换组写入组内末位 `sessionOrder` |
+| addSessionTeam / removeSessionTeam | 分队后加队（最多 6）/ 删空队（至少留 2），操作后置 `manualRoster=true`；删队时若该队仍在对阵中则拒绝；对阵展示找不到队名时兜底为默认色名并标注「已不在名单」，不再直接露出 `sess_*` id |
+| startJielongCup / clearFixtureScores | 按键开启/重开界龙杯（校验非空正式队为 4 或 5 支且队内正选 ≥24 人，置 `cupStarted=true`、`cupTeamIds`、`manualRoster=true` 并生成轮次对阵；已开赛后若不满足 4/5 队或 24 人可传 `exitToManual=true` 清除轮次与积分榜退回手动模式；有比分时拒绝开赛/重开）；`clearFixtureScores` 一键清空本场全部已记比分（保留轮次与个人数据） |
+| saveFixtureScore / updateFixture / addFixture / deleteFixture / deleteRoundDirectory / resetFixtures / setSessionColor | 场次比分（`clear` 或两侧空分可清空；开启界龙杯且 4 队前 3 轮记满后自动补第 4 轮冠亚/季军赛）、新增/修改/删除场次、删整轮并前移后续 `roundNo`、未记分时重排/清空对阵、对调双方、换场地、改队名/配色 |
+| addGoalEvent / deleteGoalEvent | 历史进球事件接口（兼容保留） |
+| clubStats | 俱乐部统计（汇总 `contributions` 与历史 `goal_events` 的进球、助攻、乌龙） |
+
+### 其它
+
+| action | 要点 |
+| --- | --- |
+| sendKickoffReminders | 定时开赛提醒（周三联提前 2h，界龙提前 2h） |
+| devEcho | 仅确认打到本地代码 |
+
+已移除：`mirrorAsk`、`mirrorFeedback`、`mirrorQuota` 及前端悬浮助手。
