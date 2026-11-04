@@ -14,7 +14,7 @@
 | players | `me`、`listPlayers`、`adminUpdatePlayer`、`setClubAdmin`；顶栏「球员」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队；「全部」只读并提示先切球队；列表不展示进球等数据，管理员点队员进弹窗才看/改本队运动数据与资料/设管理员；普通成员不返回也不展示 `clubStats` |
 | me | `me`、`orgMe`、`saveProfile`、`setMyGroup`、`updateClubGroup`；含个人运动数据栏（总活动数、总进球数、总助攻数、总乌龙球数、总鸽子数） |
 | club | `joinClub`、`updateClubGroup`、`reorderClubGroups`；顶栏「球队」字号固定；多队时绿顶栏下小字当前队 + ▾ 切球队 |
-| session | `activityDetail`、`saveProfile`、`signup`、`cancelSignup`、`updateActivityBasics`、`adminMoveSignup` / `adminSwapSignup`、`addSessionTeam` / `removeSessionTeam`、`setSessionColor`、`saveTacticsBoard`、`startJielongCup`、`clearFixtureScores`、`saveFixtureScore`、`addFixture`、`deleteRound`、`deleteRoundDirectory`、`resetFixtures`、`updateFixture`、`setContribution`、`setAbsent`、`deleteContribution`；仅未加入界龙时点报名弹注册/入队窗（带出已有头像、昵称、擅长位置）；已入队（含名册为空按「未分组」）不再反复确认资料；入队后走报名须知（鸽子规则，界龙开赛前 1.5h）并申请开赛提醒订阅；报名不设人数上限、无后补；新建场默认带 A/B 空队且 `manualRoster=true`，报名一律进「未分队池」（`team_pending`）；仅管理员可拉人进组或调队；界面无「按组分队」；「开启界龙杯」放在分队网格下方，不满足 4/5 非空队且 ≥24 人时置灰仍可点出原因；队名默认 A～F 队，改名可选名册组自动带出球衣色（可再改）；4 队小组赛积分榜 + 决赛/季军赛记满后显示领奖台，5 队小组赛全部记满后按积分显示冠亚季；其余战术板/记分/重开界龙杯行为同前 |
+| session | `activityDetail`、`saveProfile`、`signup`、`cancelSignup`、`updateActivityBasics`、`assignTeams`（一键智能分队：围绕 8 人分 2～5 队、同标签优先同队、≤45 人全进队、>45 人晚报名留未分队池、某队单一标签过半自动带组名与球衣色）、`adminMoveSignup` / `adminSwapSignup`、`addSessionTeam` / `removeSessionTeam`、`setSessionColor`、`saveTacticsBoard`、`startJielongCup`、`clearFixtureScores`、`saveFixtureScore`、`addFixture`、`deleteRound`、`deleteRoundDirectory`、`resetFixtures`、`updateFixture`、`setContribution`、`setAbsent`、`deleteContribution`；仅未加入界龙时点报名弹注册/入队窗（带出已有头像、昵称、擅长位置）；已入队（含名册为空按「未分组」）不再反复确认资料；入队后走报名须知（鸽子规则，界龙开赛前 1.5h）并申请开赛提醒订阅；报名不设人数上限、无后补；新建场默认带 A/B 空队且 `manualRoster=true`，报名一律进「未分队池」（`team_pending`）；分队区提供「⚡ 一键分队」与手动拖拽/点选微调；「开启界龙杯」放在分队网格下方，不满足 4/5 非空队且 ≥24 人时置灰仍可点出原因；队名默认 A～F 队，改名可选名册组自动带出球衣色（可再改）；4 队小组赛积分榜 + 决赛/季军赛记满后显示领奖台，5 队小组赛全部记满后按积分显示冠亚季；开启界龙杯后立即开放「记录球员数据」且场次记分后支持一键跳到本场球员数据录入 |
 
 ## 云函数 action
 
@@ -63,7 +63,7 @@
 | orgMe / joinClub / setMyGroup / switchClub | 俱乐部身份 |
 | updateClubGroup / reorderClubGroups / setClubAdmin | 组与管理员 |
 | updateActivityBasics | 界龙管理员开赛前改标题/地点/时间 |
-| assignTeams | 界龙按组一键分 6 队并开启手动分队池模式（`manualRoster=true`），不自动生成对阵；有比分后锁队 |
+| assignTeams | 界龙一键智能分队：围绕 8 人分 2～5 队（≤45 人全部入队、>45 人晚报名留未分队池），同名册组优先抱团进同一队，单一组占比 ≥50% 自动带出组名与球衣色；不自动生成对阵；有比分后锁队 |
 | adminMoveSignup / adminSwapSignup | 界龙管理员调人（仅管理员可点选或拖拽队员换组/对调、从「未分队」池拉人进组，操作后置 `manualRoster=true`）；对调互换队伍与顺序；换组写入组内末位 `sessionOrder` |
 | addSessionTeam / removeSessionTeam | 分队后加队（最多 6）/ 删空队（至少留 2），操作后置 `manualRoster=true`；删队时若该队仍在对阵中则拒绝；对阵展示找不到队名时兜底为默认色名并标注「已不在名单」，不再直接露出 `sess_*` id |
 | startJielongCup / clearFixtureScores | 按键开启/重开界龙杯（校验非空正式队为 4 或 5 支且队内正选 ≥24 人，置 `cupStarted=true`、`cupTeamIds`、`manualRoster=true` 并生成轮次对阵；已开赛后若不满足 4/5 队或 24 人可传 `exitToManual=true` 清除轮次与积分榜退回手动模式；有比分时拒绝开赛/重开）；`clearFixtureScores` 一键清空本场全部已记比分（保留轮次与个人数据） |
